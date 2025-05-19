@@ -1,41 +1,70 @@
 import telebot
 from SeaBattle import BattleField
+from player import Player
+from game import Game
 
 token = "7228333271:AAGAr5I4sJu_5xTZciFkpyMwupWvbZhoSLM"
 bot = telebot.TeleBot(token)
 
-field = BattleField(8)
+currentGameID = 0
+players = {}
+private_games = {}
 
 @bot.message_handler(commands=['start'])
 def start_message(message):
-    bot.send_message(message.chat.id, "Привет! Я бот морского боя")
+    if message.chat.id not in players.keys():
+        bot.send_message(message.chat.id, "Привет! Я бот морского боя")
+        player = Player(message.chat.id)
+        players[message.chat.id] = player
+    else:
+        bot.send_message(message.chat.id, "Мы уже знакомы!")
 
-@bot.message_handler(commands=['generate_field'])
-def generate_field(message):
-    field.generate_random_field()
-    field.print_field()
-    bot.send_message(message.chat.id, "Поле создано!")
-
-@bot.message_handler(content_types='text')
-def text_handler(message):
-    if field is None:
-        bot.send_message(message.chat.id, "Поле не создано!")
+@bot.message_handler(commands=['create_game'])
+def create_game(message):
+    global currentGameID
+    if message.chat.id not in players.keys():
+        bot.send_message(message.chat.id, "Сначала введите /start")
         return
+    player = players[message.chat.id]
+    if player.game != None:
+        bot.send_message(message.chat.id, "Вы уже состоите в игре!")
+        return
+    
+    game = Game(currentGameID, player)
+    player.game = game
+    private_games[currentGameID] = game
+    bot.send_message(message.chat.id, f"Идентификатор вашей игры: {currentGameID}")
+
+    currentGameID += 1
+
+
+@bot.message_handler(commands=['connect_game'])
+def connect_game(message):
+    if message.chat.id not in players.keys():
+        bot.send_message(message.chat.id, "Сначала введите /start")
+        return
+    player = players[message.chat.id]
+    if player.game != None:
+        bot.send_message(message.chat.id, "Вы уже состоите в игре!")
+        return
+    msg = bot.send_message(message.chat.id, "Введите идентификатор игры!")
+    bot.register_next_step_handler(msg, connect)
+    
+def connect(message):
     try:
-        shot_posX, shot_posY = map(int, message.text.split())
-        shot_posX -= 1
-        shot_posY -= 1
-        if not field.check_border(shot_posX) or not field.check_border(shot_posY):
-            bot.send_message(message.chat.id, "Вы вышли за границы поля")
+        gameID = int(message.text)
+        if gameID not in private_games.keys():
+            bot.send_message(message.chat.id, "Игры с таким идентификатором не существует")
             return
-        shot_value = field.shot(shot_posX, shot_posY)
-        if shot_value == 0:
-            bot.send_message(message.chat.id, "Вы не попали!")
-        elif shot_value == 1:
-            bot.send_message(message.chat.id, "Вы попали!")
-        else:
-            bot.send_message(message.chat.id, "Вы уже стреляли сюда!")
+        player = players[message.chat.id]
+        game = private_games[gameID]
+        player.game = game
+        game.members.append(player)
+        private_games[gameID] = None
+        for member in game.members:
+            bot.send_message(member.chatID, "Игра началась!")
     except:
-        bot.send_message(message.chat.id, "Введите координаты!")
+        bot.send_message(message.chat.id, "Некорректный идентификатор!")
+
 
 bot.infinity_polling()
