@@ -1,9 +1,8 @@
 from random import randint
 
 class BattleField:
-    field = []
-
     def __init__(self, size: int = 10):
+        self.field = []
         for _ in range(size):
             self.field.append([0] * size)
         self.positions_lost = 0
@@ -14,9 +13,14 @@ class BattleField:
             for x in range(len(self.field[y])):
                 self.field[y][x] = 0
     
-    def print_field(self):
+    def get_string_field(self):
+        string_field = ""
         for i in range(len(self.field)):
-            print(self.field[i])
+            string_field += str(self.field[i]) + "\n"
+        return string_field
+    
+    def print_field(self):
+        print(self.get_string_field())
 
     def generate_random_field(self, recursion_count: int = 0):
         if recursion_count > len(self.field)**2:
@@ -79,7 +83,7 @@ class BattleField:
                 self.field[ship_posY + i][ship_posX] = 1
         return 0
     
-    def shot(self, posX: int, posY: int) -> None:
+    def shot(self, posX: int, posY: int) -> int:
         if self.field[posY][posX] == 0:
             print("Вы не попали!")
             self.field[posY][posX] = 2

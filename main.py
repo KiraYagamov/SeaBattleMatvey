@@ -63,8 +63,41 @@ def connect(message):
         private_games[gameID] = None
         for member in game.members:
             bot.send_message(member.chatID, "Игра началась!")
-    except:
+        game.start_game(bot)
+    except :
         bot.send_message(message.chat.id, "Некорректный идентификатор!")
 
+@bot.message_handler(commands=['quit'])
+def quit(message):
+    if message.chat.id not in players.keys():
+        bot.send_message(message.chat.id, "Сначала введите /start")
+        return
+    player = players[message.chat.id]
+    if player.game == None:
+        bot.send_message(message.chat.id, "Вы не состоите ни в одной игре!")
+        return
+    game = player.game
+    for member in game.members:
+        member.game = None
+        bot.send_message(member.chatID, "Игра прервана!")
+    game.members.clear()
+    if game.gameID in private_games.keys():
+        private_games[game.gameID] = None
+
+@bot.message_handler(content_types='text')
+def text(message):
+    if message.chat.id not in players.keys():
+        bot.send_message(message.chat.id, "Сначала введите /start")
+        return
+    player = players[message.chat.id]
+    if player.game == None:
+        bot.send_message(message.chat.id, "Сначала войдите в игру: /connect_game")
+        return
+    game = player.game
+    try:
+        posX, posY = map(int, message.text.split())
+        game.shot(bot, player, posX, posY)
+    except:
+        bot.send_message(message.chat.id, "Некорректные координаты!")
 
 bot.infinity_polling()
