@@ -31,8 +31,15 @@ class Game:
             bot.send_message(member.chatID, "Вы не попали!")
             bot.send_message(self.members[enemy].chatID, f"В вас не попали!")
             self.step = 1 if self.step == 0 else 0
+            for i in range(len(self.members)):
+                member = self.members[i]
+                field = self.fields[i]
+                bot.send_message(member.chatID, "Ваше игровое поле:")
+                bot.send_message(member.chatID, field.get_string_field())
         elif shot_result == 1:
+            letters = "ABCDEFGHIJ"
+            numbers = "1234567890"
             bot.send_message(member.chatID, "Вы попали!")
-            bot.send_message(self.members[enemy].chatID, f"Вас подбили в координатах: {posX}, {posY}")
+            bot.send_message(self.members[enemy].chatID, f"Вас подбили в координатах: {letters[posY]}{numbers[posX]}")
         else:
             bot.send_message(member.chatID, "Вы уже стреляли сюда!")

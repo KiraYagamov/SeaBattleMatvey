@@ -85,16 +85,13 @@ class BattleField:
     
     def shot(self, posX: int, posY: int) -> int:
         if self.field[posY][posX] == 0:
-            print("Вы не попали!")
             self.field[posY][posX] = 2
             return 0
         elif self.field[posY][posX] == 1:
-            print("Вы попали!")
             self.field[posY][posX] = 2
             self.positions_lost -= 1
             return 1
         else:
-            print("Вы уже стреляли сюда!")
             self.field[posY][posX] = 2
             return 2
         
